@@ -2,18 +2,31 @@
 
 import torch
 from PIL import Image
-from diffusers import StableDiffusionIDMInpaintPipeline
 
 
 class IDMVTONModel:
     def __init__(self, device="cuda"):
-        print("Loading IDM-VTON model...")
+        # Defer to CPU if CUDA is not available
+        if device == "cuda" and not torch.cuda.is_available():
+            print("CUDA requested but not available; falling back to CPU")
+            device = "cpu"
 
-        self.pipe = StableDiffusionIDMInpaintPipeline.from_pretrained(
-            "yisol/IDM-VTON",
-            torch_dtype=torch.float16,
-            safety_checker=None
-        ).to(device)
+        print(f"Loading IDM-VTON model on {device}...")
+        try:
+            # Import diffusers internals at model load time to keep module import fast
+            from diffusers import StableDiffusionIDMInpaintPipeline
+
+            self.pipe = (
+                StableDiffusionIDMInpaintPipeline.from_pretrained(
+                    "yisol/IDM-VTON",
+                    torch_dtype=torch.float16 if device == "cuda" else torch.float32,
+                    safety_checker=None,
+                ).to(device)
+            )
+        except Exception as exc:
+            # Surface the original exception to the caller for logging
+            print(f"Failed to load model: {exc}")
+            raise
 
     def run(self, person_img: Image.Image, cloth_img: Image.Image):
         """
