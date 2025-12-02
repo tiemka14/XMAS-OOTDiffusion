@@ -13,6 +13,7 @@ import torch
 try:
     from diffusers import StableDiffusionXLInpaintPipeline
     IDM_PIPELINE = StableDiffusionXLInpaintPipeline
+    from diffusers import AutoencoderKL
 except Exception as e:
     raise ImportError(
         "Failed to import StableDiffusionXLInpaintPipeline from diffusers. "
@@ -22,14 +23,25 @@ import runpod
 
 # Lazy-load pipeline so imports succeed even if dependencies are missing until runtime
 pipe = None
+
 def get_pipe():
     global pipe
     if pipe is None:
+        print("Loading IDM-VTON pipeline…")
+
+        # Load an external VAE!
+        vae = AutoencoderKL.from_pretrained(
+            "stabilityai/sd-vae-ft-mse",
+            torch_dtype=torch.float16
+        )
+
         pipe = IDM_PIPELINE.from_pretrained(
             "yisol/IDM-VTON",
+            vae=vae,                        # ← IMPORTANT FIX
             torch_dtype=torch.float16,
             safety_checker=None
         ).to("cuda")
+
     return pipe
 
 
