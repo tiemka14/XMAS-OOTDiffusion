@@ -9,6 +9,7 @@ RUN pip install --upgrade pip && pip install -r requirements.txt
 
 COPY . .
 
+# RunPod Serverless handler entrypoint
 ENV RUNPOD_HANDLER=handler
 
 CMD ["python", "-u", "handler.py"]
