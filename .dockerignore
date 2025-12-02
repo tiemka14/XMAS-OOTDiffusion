@@ -1,0 +1,16 @@
+__pycache__/
+*.pyc
+.venv/
+venv/
+.git
+*.log
+data/
+models/
+*.pth
+outputs/
+*.ipynb
+*.tar
+*.tgz
+Dockerfile
+**/*.pyc
+**/__pycache__/

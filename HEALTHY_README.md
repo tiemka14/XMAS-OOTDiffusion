@@ -24,6 +24,10 @@ How to use
 ```bash
 # Build
 docker build -t xtype-your-name/xmas-ootdiffusion:latest .
+docker build -t xtype-your-name/xmas-ootdiffusion:latest . \
+  --build-arg BUILD_DATE="$(date -u +"%Y-%m-%dT%H:%M:%SZ")" \
+  --build-arg VCS_REF="$(git rev-parse --short HEAD || echo unknown)" \
+  --build-arg BUILD_VERSION="1.0"
 # Run locally (use GPU if available; set DEVICE=cpu to avoid GPU requirement)
 docker run -e DEVICE=cpu -p 8000:8000 xtype-your-name/xmas-ootdiffusion:latest
 # Check health
@@ -40,3 +44,12 @@ Debugging tips
 
 If you still get "all workers unhealthy":
 - Share the container logs, and we'll examine specific tracebacks to suggest more targeted fixes.
+
+Tip: Pin your Python package versions in `requirements.txt` to ensure reproducible builds. Example:
+
+```
+fastapi==0.99.1
+uvicorn==0.21.1
+torch==2.1.0
+# Add exact versions for the rest of your dependencies
+```
