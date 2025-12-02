@@ -1,16 +1,36 @@
+"""
+handler.py - Runpod serverless handler for IDM-VTON model
+
+Notes:
+- This handler loads a Stable Diffusion XL inpainting pipeline from the
+    `yisol/IDM-VTON` model. The model requires `diffusers>=0.25.0`.
+"""
+
 import base64
 import io
 from PIL import Image
 import torch
-from diffusers import StableDiffusionIDMInpaintPipeline
+try:
+    from diffusers import StableDiffusionXLInpaintPipeline
+    IDM_PIPELINE = StableDiffusionXLInpaintPipeline
+except Exception as e:
+    raise ImportError(
+        "Failed to import StableDiffusionXLInpaintPipeline from diffusers. "
+        "Please install or upgrade diffusers to >=0.25.0 (e.g., `pip install -U diffusers`)."
+    ) from e
 import runpod
 
-# Load once globally
-pipe = StableDiffusionIDMInpaintPipeline.from_pretrained(
-    "yisol/IDM-VTON",
-    torch_dtype=torch.float16,
-    safety_checker=None
-).to("cuda")
+# Lazy-load pipeline so imports succeed even if dependencies are missing until runtime
+pipe = None
+def get_pipe():
+    global pipe
+    if pipe is None:
+        pipe = IDM_PIPELINE.from_pretrained(
+            "yisol/IDM-VTON",
+            torch_dtype=torch.float16,
+            safety_checker=None
+        ).to("cuda")
+    return pipe
 
 
 def b64_to_img(b64_str: str) -> Image.Image:
@@ -28,7 +48,8 @@ def handler(job: dict) -> dict:
     person_img = b64_to_img(person_b64).resize((512, 768))
     cloth_img = b64_to_img(cloth_b64).resize((512, 768))
 
-    result = pipe(
+    # Ensure the pipeline is loaded before running
+    result = get_pipe()(
         image=person_img,
         mask_image=cloth_img,
         cloth=cloth_img
