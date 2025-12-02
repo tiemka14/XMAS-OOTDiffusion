@@ -1,7 +1,6 @@
-runpod
-python-multipart
-pillow
 torch
-diffusers
-accelerate
+diffusers>=0.25.0
 transformers
+accelerate
+Pillow
+runpod
